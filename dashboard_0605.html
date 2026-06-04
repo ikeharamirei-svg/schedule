@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>稼働ダッシュボード 2026年5月｜池原 実伶</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #faf9f7;
+    font-family: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic', sans-serif;
+    color: #1a1a1a;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  header {
+    background: #fff;
+    border-bottom: 2px solid #e8e4df;
+    padding: 20px 32px 16px;
+  }
+  header h1 { font-size: 18px; font-weight: 700; color: #111; }
+  header p { font-size: 12px; color: #777; margin-top: 2px; }
+
+  nav {
+    background: #fff;
+    border-bottom: 1px solid #e8e4df;
+    padding: 0 32px;
+    display: flex;
+    gap: 0;
+  }
+  nav button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 18px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #777;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  nav button:hover { color: #333; }
+  nav button.active { color: #378ADD; border-bottom-color: #378ADD; font-weight: 600; }
+
+  main { padding: 28px 32px; max-width: 1100px; }
+  section { display: none; }
+  section.active { display: block; }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8e4df;
+  }
+
+  .metrics-row {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .metric {
+    background: #fff;
+    border: 1px solid #e8e4df;
+    border-radius: 8px;
+    padding: 16px 20px;
+    flex: 1;
+    min-width: 0;
+  }
+  .metric-label { font-size: 11px; color: #888; margin-bottom: 4px; }
+  .metric-value { font-size: 26px; font-weight: 700; color: #111; }
+  .metric-unit { font-size: 13px; font-weight: 400; color: #555; margin-left: 2px; }
+  .metric-sub { font-size: 11px; color: #aaa; margin-top: 2px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  .panel {
+    background: #fff;
+    border: 1px solid #e8e4df;
+    border-radius: 8px;
+    padding: 18px 20px;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #555;
+    margin-bottom: 14px;
+  }
+
+  .insights-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  .insight {
+    background: #fff;
+    border: 1px solid #e8e4df;
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .insight-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+  .tag-blue { background: #dceeff; color: #1a5fa0; }
+  .tag-green { background: #d4f0e5; color: #155c3d; }
+  .tag-amber { background: #fdf0d5; color: #7a4a00; }
+  .tag-pink { background: #fde4ed; color: #8b1a3d; }
+  .insight-title { font-size: 13px; font-weight: 700; margin-bottom: 6px; color: #111; }
+  .insight-body { font-size: 12px; color: #444; line-height: 1.7; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: #f2f0ec; font-weight: 600; padding: 8px 10px; text-align: left; color: #444; border-bottom: 1px solid #e8e4df; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f0ede8; color: #333; }
+  tr:last-child td { border-bottom: none; }
+  tr.total-row td { border-top: 2px solid #e8e4df; font-weight: 700; background: #f9f8f6; }
+  tr:hover td { background: #faf9f7; }
+  .td-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .td-bar { width: 120px; }
+  .bar-wrap { background: #f0ede8; border-radius: 3px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 3px; }
+
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+  .dot-anken { background: #378ADD; }
+  .dot-mgmt { background: #1D9E75; }
+  .dot-org { background: #D4537E; }
+
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 1px 7px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .badge-anken { background: #dceeff; color: #1a5fa0; }
+  .badge-mgmt { background: #d4f0e5; color: #155c3d; }
+  .badge-org { background: #fde4ed; color: #8b1a3d; }
+  .badge-follow { background: #fdf0d5; color: #7a4a00; }
+
+  .chart-wrap { position: relative; }
+  .ops-badge { font-size: 10px; color: #D4537E; font-weight: 600; margin-left: 4px; }
+
+  footer {
+    margin-top: 40px;
+    padding: 16px 32px;
+    border-top: 1px solid #e8e4df;
+    font-size: 11px;
+    color: #aaa;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>稼働ダッシュボード｜2026年5月</h1>
+  <p>池原 実伶　／　集計対象：時間予約のみ（終日予定・除外カテゴリ除く）　スキップは件数カウント・時間0扱い　運用時間（日販20分×21日）含む</p>
+</header>
+
+<nav>
+  <button class="active" onclick="showSection('summary')">サマリー</button>
+  <button onclick="showSection('category')">カテゴリ分析</button>
+  <button onclick="showSection('timeline')">時系列</button>
+  <button onclick="showSection('client')">クライアント別</button>
+  <button onclick="showSection('mgmt')">マネジメント</button>
+  <button onclick="showSection('org')">社内・組織</button>
+</nav>
+
+<main>
+
+<!-- ==================== サマリー ==================== -->
+<section id="summary" class="active">
+  <div class="section-title">5月 サマリー</div>
+
+  <div class="metrics-row">
+    <div class="metric">
+      <div class="metric-label">総稼働時間</div>
+      <div class="metric-value">136.4<span class="metric-unit">h</span></div>
+      <div class="metric-sub">稼働日 21日 ／ 平均 6.5h/日　※カレンダー外稼働込み</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">総予定件数</div>
+      <div class="metric-value">142<span class="metric-unit">件</span></div>
+      <div class="metric-sub">スキップ 5件含む（カレンダー分のみ）</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">案件時間</div>
+      <div class="metric-value">84.0<span class="metric-unit">h</span></div>
+      <div class="metric-sub">全体の 61.6%　うちカレンダー外 32.0h</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">マネジメント時間</div>
+      <div class="metric-value">39.1<span class="metric-unit">h</span></div>
+      <div class="metric-sub">全体の 28.7%　うち中途採用 5.0h</div>
+    </div>
+    <div class="metric">
+      <div class="metric-label">社内・組織時間</div>
+      <div class="metric-value">13.3<span class="metric-unit">h</span></div>
+      <div class="metric-sub">全体の 9.8%　うち新卒採用 7.0h</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">大カテゴリ別 時間内訳</div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="chartBigCat"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">大カテゴリ別 構成比（ドーナツ）</div>
+      <div class="chart-wrap" style="height:220px;">
+        <canvas id="chartDonut"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="insights-row">
+    <div class="insight">
+      <span class="insight-tag tag-blue">時間構造</span>
+      <div class="insight-title">案件 84h・マネジメント 39h・社内組織 13h の三層構造</div>
+      <div class="insight-body">総稼働 136.4h のうち案件が 84.0h（61.6%）、マネジメントが 39.1h（28.7%）、社内・組織が 13.3h（9.8%）。案件のカレンダー外稼働は計 32.0h（日販7h＋資料11h＋営業コミュ8h＋レポート6h）で案件全体の38%。カレンダーだけでは見えない実態稼働が大きい構造。</div>
+    </div>
+    <div class="insight">
+      <span class="insight-tag tag-amber">週次パターン</span>
+      <div class="insight-title">5/12週・5/19週が二強、木・金が稼働の主軸</div>
+      <div class="insight-body">週別ではカレンダー分で 5/12週・5/19週に集中。5/12〜15は合宿・面接・HABA/ト認中アポが重なった4日間で特に高密度。曜日別では金 33.2h・木 31.5h が二強（カレンダー分）で、月曜 8.2h と大きく対照的。</div>
+    </div>
+    <div class="insight">
+      <span class="insight-tag tag-green">クライアント負荷</span>
+      <div class="insight-title">ト認中 30.5h・住不 27.5h が二強、コミュファ資料作業が増加</div>
+      <div class="insight-body">カレンダー外込みではト認中 30.5h・住不 27.5h がほぼ拮抗。住不はレポート作成6h＋営業コミュ6hで合宿分を補う実態稼働。コミュファは資料作成4hが加わり 9.5h と存在感が増す。フォロー案件4社は計 14.0h で案件全体の17%。</div>
+    </div>
+    <div class="insight">
+      <span class="insight-tag tag-pink">マネジメント構造</span>
+      <div class="insight-title">組織運営 27.6h が最大・OSCボードが16.5hで60%</div>
+      <div class="insight-body">マネジメント 39.1h のうち組織運営が 27.6h（71%）。組織運営はOSCボード（合宿・ヨミ会・第二本部ボード・局ボード・ヒトノコト）が 16.5h と圧倒的。PJT（土台・効果MAX・生産性）6.5h、締め会（月初・体制共有）2.6h、アドバンスボード（昇格評価）2.0h が続く。中途採用 5.0h（面接3件＋ランチ面談）・メンバー面談 5.0h・MGR育成 3.5h も独立負荷。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== カテゴリ分析 ==================== -->
+<section id="category">
+  <div class="section-title">カテゴリ分析</div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">中カテゴリ別 時間（横棒）</div>
+      <div class="chart-wrap" style="height:340px;">
+        <canvas id="chartMidBar"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">中カテゴリ詳細</div>
+      <table>
+        <thead><tr><th>大カテゴリ</th><th>中カテゴリ</th><th class="td-num">時間</th><th class="td-num">%</th></tr></thead>
+        <tbody id="midTable"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 時系列 ==================== -->
+<section id="timeline">
+  <div class="section-title">時系列分析</div>
+  <div class="panel" style="margin-bottom:20px;">
+    <div class="panel-title">週別稼働時間（カレンダー分）</div>
+    <div class="chart-wrap" style="height:200px;">
+      <canvas id="chartWeek"></canvas>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">曜日別稼働時間</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="chartDow"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">日別稼働時間</div>
+      <div class="chart-wrap" style="height:200px;">
+        <canvas id="chartDaily"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== クライアント別 ==================== -->
+<section id="client">
+  <div class="section-title">クライアント別（案件のみ）</div>
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title">直轄案件 クライアント別 稼働時間（運用込み）</div>
+      <div class="chart-wrap" style="height:260px;">
+        <canvas id="chartClient"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">直轄案件 内訳テーブル</div>
+      <table>
+        <thead><tr><th>クライアント</th><th class="td-num">件数</th><th class="td-num">定例・アポ</th><th class="td-num">社内MTG</th><th class="td-num">案件作業</th><th class="td-num">カレンダー外<br><span style="font-weight:400;font-size:10px;color:#aaa;">日販・資料・営業・報告</span></th><th class="td-num">合計</th><th class="td-bar"></th></tr></thead>
+        <tbody id="directTable"></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="panel" style="margin-top:0;">
+    <div class="panel-title">案件フォロー テーブル</div>
+    <table>
+      <thead><tr><th>クライアント</th><th class="td-num">件数</th><th class="td-num">合計（h）</th><th class="td-bar">構成比</th></tr></thead>
+      <tbody id="followTable"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== マネジメント ==================== -->
+<section id="mgmt">
+  <div class="section-title">マネジメント分析</div>
+
+  <div class="grid-2" style="margin-bottom:24px;">
+    <div class="panel">
+      <div class="panel-title">組織運営 内訳（パイ）</div>
+      <div class="chart-wrap" style="height:240px;">
+        <canvas id="chartMgmtPie"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title">面談メンバー別</div>
+      <table>
+        <thead><tr><th>メンバー</th><th class="td-num">回数</th><th class="td-num">合計（h）</th><th>実施日</th></tr></thead>
+        <tbody id="membersTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-title">組織運営 サブカテゴリ</div>
+      <table>
+        <thead><tr><th>カテゴリ</th><th>内容</th><th class="td-num">時間</th></tr></thead>
+        <tbody id="orgSubTable"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-title">中途採用 内訳</div>
+      <table>
+        <thead><tr><th>区分</th><th class="td-num">時間（h）</th><th class="td-num">%</th></tr></thead>
+        <tbody id="adopTable"></tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-title">研修・育成プログラム</div>
+      <table>
+        <thead><tr><th>プログラム</th><th class="td-num">時間（h）</th></tr></thead>
+        <tbody>
+          <tr><td>MGR育成PJT（もこちゃん）</td><td class="td-num">3.5</td></tr>
+          <tr class="total-row"><td>合計</td><td class="td-num">3.5</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== 社内・組織 ==================== -->
+<section id="org">
+  <div class="section-title">社内・組織</div>
+  <div class="grid-3">
+    <div class="panel">
+      <div class="panel-title">社内共有・勉強会 内訳</div>
+      <table>
+        <thead><tr><th>内容</th><th class="td-num">時間（h）</th></tr></thead>
+        <tbody>
+          <tr><td>Claude勉強会</td><td class="td-num">1.3</td></tr>
+          <tr><td>CHATGPT広告 勉強会</td><td class="td-num">1.0</td></tr>
+          <tr class="total-row"><td>合計</td><td class="td-num">2.3</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-title">全社イベント 内訳</div>
+      <table>
+        <thead><tr><th>内容</th><th class="td-num">時間（h）</th></tr></thead>
+        <tbody>
+          <tr><td>18周年 全体進捗共有・演出議論（計4回）</td><td class="td-num">2.0</td></tr>
+          <tr class="total-row"><td>合計</td><td class="td-num">2.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="panel">
+      <div class="panel-title">新卒採用 内訳</div>
+      <table>
+        <thead><tr><th>内容</th><th class="td-num">時間（h）</th></tr></thead>
+        <tbody>
+          <tr><td>新卒ボードMTG（×4回）</td><td class="td-num">4.0</td></tr>
+          <tr><td>新卒ランチ：仲村さん</td><td class="td-num">3.0</td></tr>
+          <tr class="total-row"><td>合計</td><td class="td-num">7.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  2026年5月 稼働ダッシュボード　Pool：ICS（Googleカレンダー）＋ サイボウズCSV　重複排除済み　生成日：2026/06/04
+</footer>
+
+<script>
+function showSection(id) {
+  document.querySelectorAll('section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+const C_ANKEN = '#378ADD';
+const C_MGMT  = '#1D9E75';
+const C_ORG   = '#D4537E';
+const C_TEIKI = '#378ADD';
+const C_APO   = '#5BA8E5';
+const C_NAIM  = '#B5D4F4';
+const C_WORK  = '#0C447C';
+const C_OPS   = '#D4537E';
+const C_FOLLOW= '#F0A830';
+const TOTAL   = 136.4;
+
+// ---- サマリー 棒グラフ ----
+new Chart(document.getElementById('chartBigCat'), {
+  type: 'bar',
+  data: {
+    labels: ['案件', 'マネジメント', '社内・組織'],
+    datasets: [{
+      label: '時間数（h）',
+      data: [84.0, 39.1, 13.3],
+      backgroundColor: [C_ANKEN, C_MGMT, C_ORG],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ---- ドーナツ ----
+new Chart(document.getElementById('chartDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['案件 61.6%', 'マネジメント 28.7%', '社内・組織 9.8%'],
+    datasets: [{
+      data: [84.0, 39.1, 13.3],
+      backgroundColor: [C_ANKEN, C_MGMT, C_ORG],
+      borderWidth: 2,
+      borderColor: '#faf9f7',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 12 } }
+    },
+    cutout: '60%',
+  }
+});
+
+// ---- カテゴリ分析 横棒 ----
+const midData = [
+  { label: '組織運営', h: 27.6, cat: 'マネジメント' },
+  { label: 'ト認中', h: 30.5, cat: '案件' },
+  { label: '住不（分マン）', h: 27.5, cat: '案件' },
+  { label: '新卒採用', h: 7.0, cat: '社内・組織' },
+  { label: 'HABA（フォロー）', h: 5.0, cat: '案件フォロー' },
+  { label: 'メンバー面談', h: 5.0, cat: 'マネジメント' },
+  { label: 'アリナミン（フォロー）', h: 4.5, cat: '案件フォロー' },
+  { label: 'コミュファ光', h: 9.5, cat: '案件' },
+  { label: 'こちゃれんじ（フォロー）', h: 4.0, cat: '案件フォロー' },
+  { label: '研修・育成', h: 3.5, cat: 'マネジメント' },
+  { label: '中途採用', h: 5.0, cat: 'マネジメント' },
+  { label: '全社イベント', h: 2.0, cat: '社内・組織' },
+  { label: '社内共有・勉強会', h: 2.3, cat: '社内・組織' },
+  { label: 'ニトリ', h: 2.5, cat: '案件' },
+  { label: 'ユニクロ（フォロー）', h: 0.5, cat: '案件フォロー' },
+];
+const sorted = [...midData].sort((a,b) => b.h - a.h);
+const catColor = (c) => c==='案件'?C_ANKEN:c==='マネジメント'?C_MGMT:c==='社内・組織'?C_ORG:C_FOLLOW;
+
+new Chart(document.getElementById('chartMidBar'), {
+  type: 'bar',
+  data: {
+    labels: sorted.map(d => d.label),
+    datasets: [{
+      data: sorted.map(d => d.h),
+      backgroundColor: sorted.map(d => catColor(d.cat)),
+      borderRadius: 3,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { color: '#f0ede8' }, ticks: { font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+    }
+  }
+});
+
+// ---- 中カテゴリテーブル ----
+const bigLabel = (cat) => {
+  if(cat==='案件') return '<span class="badge badge-anken">案件</span>';
+  if(cat==='マネジメント') return '<span class="badge badge-mgmt">管理</span>';
+  if(cat==='案件フォロー') return '<span class="badge badge-follow">F案件</span>';
+  return '<span class="badge badge-org">社内</span>';
+};
+const midTableEl = document.getElementById('midTable');
+let midTotal = 0;
+sorted.forEach(d => {
+  midTotal += d.h;
+  const pct = ((d.h/TOTAL)*100).toFixed(1);
+  midTableEl.innerHTML += `<tr><td>${bigLabel(d.cat)}</td><td>${d.label}</td><td class="td-num">${d.h.toFixed(1)}</td><td class="td-num">${pct}%</td></tr>`;
+});
+midTableEl.innerHTML += `<tr class="total-row"><td colspan="2">合計</td><td class="td-num">${midTotal.toFixed(1)}</td><td class="td-num">—</td></tr>`;
+
+// ---- 週別 ----
+new Chart(document.getElementById('chartWeek'), {
+  type: 'bar',
+  data: {
+    labels: ['5/1週', '5/5週', '5/12週', '5/19週', '5/26週'],
+    datasets: [{
+      label: '時間（h）',
+      data: [3.5, 15.8, 38.2, 41.0, 31.2],
+      backgroundColor: C_ANKEN,
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => `${ctx.raw}h` } }
+    },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f0ede8' } }
+    }
+  }
+});
+
+// ---- 曜日別 ----
+new Chart(document.getElementById('chartDow'), {
+  type: 'bar',
+  data: {
+    labels: ['月', '火', '水', '木', '金'],
+    datasets: [{
+      label: '時間（h）',
+      data: [8.2, 29.8, 25.0, 31.5, 33.2],
+      backgroundColor: [C_MGMT, C_ANKEN, C_ANKEN, C_ANKEN, C_ANKEN],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#f0ede8' } }
+    }
+  }
+});
+
+// ---- 日別 ----
+const dailyDates = ['5/1','5/4','5/5','5/6','5/7','5/8','5/11','5/12','5/13','5/14','5/15','5/18','5/19','5/20','5/21','5/22','5/25','5/26','5/27','5/28','5/29','5/31'];
+const dailyVals  = [3.5,0.5,3.5,6.0,2.5,3.2,2.8,9.8,9.0,9.0,7.8,1.5,8.0,4.5,14.5,12.5,3.5,8.5,5.5,5.5,6.2,2.0];
+new Chart(document.getElementById('chartDaily'), {
+  type: 'bar',
+  data: {
+    labels: dailyDates,
+    datasets: [{
+      data: dailyVals,
+      backgroundColor: dailyVals.map(v => v >= 10 ? C_ORG : v >= 7 ? C_ANKEN : '#B5D4F4'),
+      borderRadius: 2,
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 45 } },
+      y: { grid: { color: '#f0ede8' } }
+    }
+  }
+});
+
+// ---- クライアント棒グラフ ----
+new Chart(document.getElementById('chartClient'), {
+  type: 'bar',
+  data: {
+    labels: ['住不（分マン）', 'ト認中', 'コミュファ光', 'ニトリ'],
+    datasets: [
+      { label: '定例・アポ',          data: [6.0,  7.5, 1.5, 0.0], backgroundColor: C_TEIKI, borderRadius: 3 },
+      { label: '社内MTG',             data: [0.0,  7.5, 3.0, 0.0], backgroundColor: C_NAIM,  borderRadius: 3 },
+      { label: '案件作業',            data: [4.5,  5.5, 0.0, 2.5], backgroundColor: C_WORK,  borderRadius: 3 },
+      { label: '日販確認（運用）',     data: [2.0,  4.0, 1.0, 0.0], backgroundColor: C_OPS,   borderRadius: 3 },
+      { label: '資料作成（カレンダー外）', data: [3.0, 4.0, 4.0, 0.0], backgroundColor: '#9B6BC5', borderRadius: 3 },
+      { label: '営業コミュ（カレンダー外）', data: [6.0, 2.0, 0.0, 0.0], backgroundColor: '#E8A838', borderRadius: 3 },
+      { label: 'レポート作成（カレンダー外）', data: [6.0, 0.0, 0.0, 0.0], backgroundColor: '#5CB89A', borderRadius: 3 },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } } },
+    scales: {
+      x: { stacked: true, grid: { display: false } },
+      y: { stacked: true, grid: { color: '#f0ede8' } }
+    }
+  }
+});
+
+// ---- 直轄テーブル ----
+const directData = [
+  { cl:'住不（分マン）', cnt:16, teiki:6.0, naim:0.0, work:4.5, ops_cal:2.0, ops_shiryou:3.0, ops_eigyo:6.0, ops_report:6.0, total:27.5 },
+  { cl:'ト認中',        cnt:26, teiki:7.5, naim:7.5, work:5.5, ops_cal:4.0, ops_shiryou:4.0, ops_eigyo:2.0, ops_report:0.0, total:30.5 },
+  { cl:'コミュファ光',  cnt:9,  teiki:1.5, naim:3.0, work:0.0, ops_cal:1.0, ops_shiryou:4.0, ops_eigyo:0.0, ops_report:0.0, total:9.5  },
+  { cl:'ニトリ',        cnt:5,  teiki:0.0, naim:0.0, work:2.5, ops_cal:0.0, ops_shiryou:0.0, ops_eigyo:0.0, ops_report:0.0, total:2.5  },
+];
+const dirMax = 30.5;
+const dirTBody = document.getElementById('directTable');
+let dirTotal = {cnt:0,teiki:0,naim:0,work:0,ops_cal:0,ops_shiryou:0,ops_eigyo:0,ops_report:0,total:0};
+directData.forEach(d => {
+  Object.keys(dirTotal).forEach(k => { dirTotal[k] += d[k]; });
+  const pct = ((d.total/dirMax)*100).toFixed(0);
+  const ops_all = d.ops_cal + d.ops_shiryou + d.ops_eigyo + d.ops_report;
+  dirTBody.innerHTML += `<tr>
+    <td>${d.cl}</td>
+    <td class="td-num">${d.cnt}</td>
+    <td class="td-num">${d.teiki > 0 ? d.teiki.toFixed(1) : '—'}</td>
+    <td class="td-num">${d.naim  > 0 ? d.naim.toFixed(1)  : '—'}</td>
+    <td class="td-num">${d.work  > 0 ? d.work.toFixed(1)  : '—'}</td>
+    <td class="td-num"><span class="ops-badge">${ops_all.toFixed(1)}</span></td>
+    <td class="td-num"><b>${d.total.toFixed(1)}</b></td>
+    <td class="td-bar"><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${C_ANKEN};"></div></div></td>
+  </tr>`;
+});
+const ops_all_total = dirTotal.ops_cal+dirTotal.ops_shiryou+dirTotal.ops_eigyo+dirTotal.ops_report;
+dirTBody.innerHTML += `<tr class="total-row">
+  <td>合計</td><td class="td-num">${dirTotal.cnt}</td>
+  <td class="td-num">${dirTotal.teiki.toFixed(1)}</td>
+  <td class="td-num">${dirTotal.naim.toFixed(1)}</td>
+  <td class="td-num">${dirTotal.work.toFixed(1)}</td>
+  <td class="td-num"><span class="ops-badge">${ops_all_total.toFixed(1)}</span></td>
+  <td class="td-num">${dirTotal.total.toFixed(1)}</td><td></td>
+</tr>`;
+
+// ---- フォローテーブル ----
+const followData = [
+  { cl:'HABA',         cnt:6, h:5.0 },
+  { cl:'アリナミン製薬', cnt:6, h:4.5 },
+  { cl:'こどもちゃれんじ', cnt:4, h:4.0 },
+  { cl:'ユニクロ',     cnt:1, h:0.5 },
+];
+const followMax = 5.0;
+const followSum = followData.reduce((s,d)=>s+d.h,0);
+const followTBody = document.getElementById('followTable');
+followData.forEach(d => {
+  const pct = ((d.h/followMax)*100).toFixed(0);
+  followTBody.innerHTML += `<tr>
+    <td>${d.cl}</td>
+    <td class="td-num">${d.cnt}</td>
+    <td class="td-num">${d.h.toFixed(1)}</td>
+    <td class="td-bar"><div class="bar-wrap"><div class="bar-fill" style="width:${pct}%;background:${C_FOLLOW};"></div></div></td>
+  </tr>`;
+});
+followTBody.innerHTML += `<tr class="total-row"><td>合計</td><td class="td-num">${followData.reduce((s,d)=>s+d.cnt,0)}</td><td class="td-num">${followSum.toFixed(1)}</td><td></td></tr>`;
+
+// ---- マネジメント パイ ----
+new Chart(document.getElementById('chartMgmtPie'), {
+  type: 'doughnut',
+  data: {
+    labels: ['OSCボード 16.5h', 'PJT 6.5h', '締め会 2.6h', 'アドバンスボード 2.0h'],
+    datasets: [{
+      data: [16.5, 6.5, 2.6, 2.0],
+      backgroundColor: ['#1D9E75','#5BA8E5','#D4537E','#F0A830'],
+      borderWidth: 2,
+      borderColor: '#faf9f7',
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'bottom', labels: { font: { size: 11 }, padding: 10 } }
+    },
+    cutout: '55%',
+  }
+});
+
+// ---- 面談テーブル ----
+const membersData = [
+  { name:'梅島弥那',   cnt:4, h:2.0, dates:'5/11・5/19・5/20・5/25' },
+  { name:'野原菜生',   cnt:2, h:1.0, dates:'5/15・5/20' },
+  { name:'野中桃子',   cnt:2, h:1.5, dates:'5/28・5/29（育成相談含む）' },
+  { name:'簑島功樹',   cnt:1, h:0.5, dates:'5/25' },
+];
+const memTBody = document.getElementById('membersTable');
+let memTotal = {cnt:0, h:0};
+membersData.forEach(d => {
+  memTotal.cnt+=d.cnt; memTotal.h+=d.h;
+  memTBody.innerHTML += `<tr><td>${d.name}</td><td class="td-num">${d.cnt}</td><td class="td-num">${d.h.toFixed(1)}</td><td style="font-size:11px;color:#666;">${d.dates}</td></tr>`;
+});
+memTBody.innerHTML += `<tr class="total-row"><td>合計</td><td class="td-num">${memTotal.cnt}</td><td class="td-num">${memTotal.h.toFixed(1)}</td><td></td></tr>`;
+
+// ---- 組織運営サブテーブル ----
+const orgSubData = [
+  { cat:'OSCボード',      items:[
+    { sub:'合宿（3Q合宿・前すり）', h:4.5 },
+    { sub:'ヨミ会',               h:4.0 },
+    { sub:'第二本部ボード',        h:4.0 },
+    { sub:'局ボードMTG・ボード会議', h:3.0 },
+    { sub:'ヒトノコト',            h:1.0 },
+  ]},
+  { cat:'PJT', items:[
+    { sub:'土台MTG',     h:2.0 },
+    { sub:'効果MAX',     h:2.0 },
+    { sub:'生産性ボード', h:2.0 },
+    { sub:'生産性PJT',   h:0.5 },
+  ]},
+  { cat:'締め会', items:[
+    { sub:'締め会',      h:0.8 },
+    { sub:'組織体制共有', h:1.0 },
+    { sub:'月初会',      h:0.8 },
+  ]},
+  { cat:'アドバンスボード', items:[
+    { sub:'昇格・評価',  h:2.0 },
+  ]},
+];
+const orgTBody = document.getElementById('orgSubTable');
+let orgGrandTotal = 0;
+const catColors = {'OSCボード':'#1D9E75','PJT':'#5BA8E5','締め会':'#D4537E','アドバンスボード':'#F0A830'};
+orgSubData.forEach(group => {
+  const catTotal = group.items.reduce((s,d) => s+d.h, 0);
+  orgGrandTotal += catTotal;
+  orgTBody.innerHTML += `<tr style="background:#f7f6f3;">
+    <td colspan="2" style="font-weight:700;font-size:11px;">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${catColors[group.cat]};margin-right:5px;"></span>${group.cat}
+    </td>
+    <td class="td-num" style="font-weight:700;">${catTotal.toFixed(1)}h</td>
+  </tr>`;
+  group.items.forEach(d => {
+    orgTBody.innerHTML += `<tr><td style="padding-left:22px;color:#666;">${d.sub}</td><td></td><td class="td-num">${d.h.toFixed(1)}</td></tr>`;
+  });
+});
+orgTBody.innerHTML += `<tr class="total-row"><td colspan="2">合計</td><td class="td-num">${orgGrandTotal.toFixed(1)}</td></tr>`;
+
+// ---- 採用テーブル ----
+const adopTotal = 5.0;
+const adopTBody = document.getElementById('adopTable');
+[['面接（大田 朝統さん）', 1.0], ['面接（キム ミソさん）', 1.0], ['面接（横山 日南さん）', 1.0], ['大田さんランチ', 2.0]].forEach(([k,v]) => {
+  adopTBody.innerHTML += `<tr><td>${k}</td><td class="td-num">${v.toFixed(1)}</td><td class="td-num">${((v/adopTotal)*100).toFixed(0)}%</td></tr>`;
+});
+adopTBody.innerHTML += `<tr class="total-row"><td>合計</td><td class="td-num">${adopTotal.toFixed(1)}</td><td></td></tr>`;
+</script>
+</body>
+</html>
